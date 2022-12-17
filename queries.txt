@@ -1,0 +1,71 @@
+/*query 1 - which artist has earned the most according to the InvoiceLine?*/
+
+SELECT table_d.ArtistId, table_d.Name, sum(table_a.UnitPrice)
+FROM InvoiceLine AS table_a
+INNER JOIN Track AS table_b
+ON table_b.TrackId = table_a.TrackId
+INNER JOIN Album AS table_c
+ON table_c.AlbumId = table_b.AlbumId
+INNER JOIN Artist AS table_d
+ON table_d.ArtistId = table_c.ArtistId
+GROUP BY table_d.ArtistId , table_d.Name
+ORDER BY 3 DESC
+OFFSET 0 ROWS
+FETCH NEXT 10 ROWS only;
+
+/*query 2 - artists with the most amount of albums created */
+SELECT table_a.name, count(table_b.title)
+FROM Artist table_a
+JOIN Album table_b
+on table_a.ArtistId = table_b.ArtistId
+GROUP by table_a.name
+order by count(table_b.title) DESC
+OFFSET 0 ROWS
+FETCH NEXT 10 ROWS only;
+
+/*query 3 - the most sold genre */
+
+SELECT table_a.Name, SUM(table_c.UnitPrice)
+FROM Genre table_a
+JOIN Track table_b
+ON table_a.GenreId = table_b.GenreId
+JOIN InvoiceLine table_c
+ON table_c.TrackId = table_b.TrackId
+GROUP BY table_a.Name
+ORDER BY SUM(table_c.UnitPrice) DESC;
+
+
+/*query 4 - most popular gener per country */
+
+WITH genres as 
+(SELECT namee, MAX(num) AS largest
+from 
+(SELECT table_e.country AS namee, table_a.Name,count(table_a.Name) AS num
+FROM Genre table_a
+JOIN Track table_b
+ON table_a.GenreId = table_b.GenreId
+JOIN InvoiceLine table_c
+ON table_c.TrackId = table_b.TrackId
+JOIN Invoice table_d
+ON table_d.InvoiceId = table_c.InvoiceId
+JOIN Customer table_e
+on table_e.CustomerId = table_d.CustomerId
+GROUP by table_e.country , table_a.Name) AS t1
+GROUP BY namee)
+SELECT table_k.country AS namee, table_f.Name, COUNT(table_f.Name) AS num
+FROM Genre table_f
+JOIN Track table_q
+ON table_f.GenreId = table_q.GenreId
+JOIN InvoiceLine table_w
+ON table_w.TrackId = table_q.TrackId
+JOIN Invoice table_h
+ON table_h.InvoiceId = table_w.InvoiceId
+JOIN Customer table_k
+on table_k.CustomerId = table_h.CustomerId
+JOIN genres table_x
+on table_x.Namee = table_k.Country
+GROUP by table_k.country , table_f.Name
+HAVING MAX(table_x.largest) = count(table_f.name) 
+ORDER BY count(table_f.Name) DESC
+OFFSET 0 ROWS
+FETCH NEXT 24 ROWS only;
